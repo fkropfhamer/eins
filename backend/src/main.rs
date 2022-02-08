@@ -8,10 +8,17 @@ use std::sync::{
     atomic::{AtomicUsize, Ordering},
     Arc,
 };
+use serde::{Deserialize, Serialize};
 
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
 
 type Users = Arc<RwLock<HashMap<usize, mpsc::UnboundedSender<Message>>>>;
+
+#[derive(Serialize, Deserialize)]
+struct ChatMessage {
+    username: String,
+    text: String,
+}
 
 #[tokio::main]
 async fn main() {
@@ -80,7 +87,16 @@ async fn user_message(my_id: usize, msg: Message, users: &Users) {
         return;
     };
 
-    let new_msg = format!("<User#{}>: {}", my_id, msg);
+    let chat_message = ChatMessage {
+        username: format!("<User#{}>", my_id),
+        text: msg.to_string()
+    };
+
+    let new_msg = if let Ok(s) = serde_json::to_string(&chat_message) {
+        s
+    } else {
+        return;
+    };
 
     for (&uid, tx) in users.read().await.iter() {
         if my_id != uid {

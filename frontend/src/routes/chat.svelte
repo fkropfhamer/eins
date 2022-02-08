@@ -1,8 +1,13 @@
 <script lang="ts">
     import { onMount } from 'svelte';
 
+    interface ChatMessage {
+        username: string,
+        text: string,
+    }
+
     let socket: WebSocket | null = null
-    let messages: string[] = []
+    let messages: ChatMessage[] = []
     let message = ""
 
     function handleClick() {
@@ -11,7 +16,8 @@
         }
 
         socket.send(message)
-        messages = [...messages, `<you>: ${message}`]
+        const myMessage = { username: "you", text: message }
+        messages = [...messages, myMessage]
         message = ""
     }
 
@@ -24,7 +30,10 @@
 
         socket.addEventListener('message', (event) => {
             console.log(event.data)
-            messages = [...messages, event.data]
+            const recievedMessage = JSON.parse(event.data);
+            console.log(message)
+
+            messages = [...messages, recievedMessage]
         })
     })
 </script>
@@ -38,5 +47,5 @@
 <input bind:value={message} >
 <button on:click={handleClick}>send</button>
 {#each messages as message}
-    <p>{message}</p>
+    <p>{message.username}: {message.text}</p>
 {/each}
