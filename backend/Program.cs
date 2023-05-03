@@ -14,9 +14,9 @@ builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
-        builder =>
+        policyBuilder =>
         {
-            builder
+            policyBuilder
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .SetIsOriginAllowed((host) => true)
@@ -31,24 +31,16 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-
-
+    
     app.UseCors();
 }
 
 app.UseRouting();
 app.UseAuthorization();
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapHub<GameHub>("/game");
-});
 
 app.UseHttpsRedirection();
 
-
-
 app.MapControllers();
-
-
+app.MapHub<GameHub>("/game");
 
 app.Run();
