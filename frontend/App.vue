@@ -2,6 +2,7 @@
   <div v-if="connection && !isDisconnected">
     <div v-if="hasUsername">
       <Chat :connection="{connection}"/>
+      <Game :connection="{connection}"/>
     </div>
     <div v-else>
       <Username @username-set="onUsernameSet"/>
@@ -13,7 +14,7 @@
   <div v-else>
     Connecting...
   </div>
-  <Game :connection="{connection}"/>
+  
 </template>
 
 <script>
@@ -42,7 +43,7 @@ export default {
       .withUrl("https://localhost:7007/game")
       .build();
 
-    connection.on("send", (data) => {
+    connection.on("Message", (data) => {
       console.log(data);
     });
 

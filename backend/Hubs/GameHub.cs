@@ -1,21 +1,21 @@
-using System.Collections.Concurrent;
-using backend.Models;
+using System.Diagnostics;
+using backend.Manager;
 using Microsoft.AspNetCore.SignalR;
 
 namespace backend.Hubs;
 
 public class GameHub : Hub
 {
-    private static readonly ConcurrentDictionary<Guid, Game> Games = new ();
-    private static readonly ConcurrentDictionary<string, Player> Players = new ();
+    private static readonly GameManager GameManager = new();
     public void SendMessage(string message)
     {
-        if (!Players.TryGetValue(Context.ConnectionId, out var player))
+        var player = GameManager.GetPlayer(Context.ConnectionId);
+        if (player == null)
         {
             return;
         }
 
-        var username = player.username;
+        var username = player.Username;
         
         Clients.All.SendAsync("ReceiveMessage", username, message);
     }
@@ -26,35 +26,34 @@ public class GameHub : Hub
             .SendAsync("send", message);
     }
 
-    public void JoinGame()
+    public void JoinGame(Guid gameId) 
     {
-        var client = Clients.Client(Context.ConnectionId);
-        var user = new Player(client, "");
-        
-        var game = new Game();
-        var id = Guid.NewGuid();
+        GameManager.JoinGame(Context.ConnectionId, gameId);
+    }
 
-        Games.TryAdd(id, game);
-        game.AddPlayer(user);
-        
-        game.Start();
+    public void StartGame()
+    {
+        GameManager.StartGame(Context.ConnectionId);
+    }
+
+    public void CreateGame()
+    {
+        GameManager.CreateGame(Context.ConnectionId);
     }
 
     public void Join(string username)
     {
         var connectionId = Context.ConnectionId;
         var client = Clients.Client(connectionId);
-        var player = new Player(client, username);
 
-        Players.TryAdd(connectionId, player);
+        GameManager.CreatePlayer(connectionId, client, username);
     }
 
     public override Task OnDisconnectedAsync(Exception? exception)
     {
         var connectionId = Context.ConnectionId;
-        Players.TryRemove(connectionId, out _);
+        GameManager.RemovePlayer(connectionId);
 
-        
         return base.OnDisconnectedAsync(exception);
     }
 }
