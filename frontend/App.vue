@@ -9,7 +9,7 @@
     </div>
   </div>
   <div v-else-if="isDisconnected">
-    Disconnected
+    Disconnected!!!
   </div>
   <div v-else>
     Connecting...
